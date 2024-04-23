@@ -11,29 +11,30 @@
 
 package game
 
-import "core:math/linalg"
 import "core:fmt"
 import rl "vendor:raylib"
 
 PixelWindowHeight :: 180
+FPS :: 144
+FPS_TO_SPEED :: 0.41667
+MAX :: 100000
+SPEED_MULT :: FPS * FPS_TO_SPEED
+WIDTH : i32 : 800
+HEIGHT : i32 : 450
 
-GameMemory :: struct {	
-	player_pos: Vec2,
-	some_number: int,
+Bunny :: struct {
+	pos: rl.Vector2,
+	speed: rl.Vector2,
+	color: rl.Color,
+}
+
+GameMemory :: struct {
+	bunnies_count: int,
+	bunnies: [MAX]Bunny,
+	tex_bunny: rl.Texture2D,
 }
 
 g_mem: ^GameMemory
-
-game_camera :: proc() -> rl.Camera2D {
-	w := f32(rl.GetScreenWidth())
-	h := f32(rl.GetScreenHeight())
-
-	return {
-		zoom = h/PixelWindowHeight,
-		target = g_mem.player_pos,
-		offset = { w/2, h/2 },
-	}
-}
 
 ui_camera :: proc() -> rl.Camera2D {
 	return {
@@ -42,38 +43,55 @@ ui_camera :: proc() -> rl.Camera2D {
 }
 
 update :: proc() {
-	input: Vec2
+	if rl.IsMouseButtonDown(rl.MouseButton.LEFT) {
+		fmt.printfln("ADD BUNNIES. Total: {0}", g_mem.bunnies_count)
 
-	if rl.IsKeyDown(.UP) {
-		input.y -= 1
-	}
-	if rl.IsKeyDown(.DOWN) {
-		input.y += 1
-	}
-	if rl.IsKeyDown(.LEFT) {
-		input.x -= 1
-	}
-	if rl.IsKeyDown(.RIGHT) {
-		input.x += 1
+		for _ in 0..<200 {
+			if g_mem.bunnies_count < MAX {
+				new_bunny := &g_mem.bunnies[g_mem.bunnies_count]
+				g_mem.bunnies_count += 1
+
+				new_bunny.pos = rl.GetMousePosition()
+				new_bunny.speed.x = f32(rl.GetRandomValue(-250, 250)) / SPEED_MULT
+				new_bunny.speed.y = f32(rl.GetRandomValue(-250, 250)) / SPEED_MULT
+				new_bunny.color = Color{
+					cast(u8)rl.GetRandomValue(50, 240), 
+					cast(u8)rl.GetRandomValue(80, 240), 
+					cast(u8)rl.GetRandomValue(100, 240),
+					255,
+				}
+			}
+		}
 	}
 
-	input = linalg.normalize0(input)
-	g_mem.player_pos += input * rl.GetFrameTime() * 100
-	g_mem.some_number += 1
+	for i in 0..<g_mem.bunnies_count {
+		bunny := &g_mem.bunnies[i]
+
+		bunny.pos.x += bunny.speed.x
+		bunny.pos.y += bunny.speed.y
+
+		if (((bunny.pos.x + f32(g_mem.tex_bunny.width/2)) > f32(rl.GetScreenWidth())) ||
+			((bunny.pos.x + f32(g_mem.tex_bunny.width/2)) < 0)) {
+			bunny.speed.x *= -1
+		}
+
+		if (((bunny.pos.y + f32(g_mem.tex_bunny.height/2)) > f32(rl.GetScreenHeight())) ||
+			((bunny.pos.y + f32(g_mem.tex_bunny.height/2)) < 0)) {
+			bunny.speed.y *= -1
+		}
+	}
 }
 
 draw :: proc() {
 	rl.BeginDrawing()
 	rl.ClearBackground(rl.BLACK)
 	
-	rl.BeginMode2D(game_camera())
-	rl.DrawRectangleV(g_mem.player_pos, {4, 8}, rl.WHITE)
-	rl.DrawRectangleV({20, 20}, {10, 20}, rl.RED)
-	rl.EndMode2D()
+	for i in 0..<g_mem.bunnies_count {
+		rl.DrawTexture(g_mem.tex_bunny, (i32)(g_mem.bunnies[i].pos.x), cast(i32)g_mem.bunnies[i].pos.y, g_mem.bunnies[i].color)
+	}
 
-	rl.BeginMode2D(ui_camera())
-	rl.DrawText(fmt.ctprintf("some_number: %v\nplayer_pos: %v", g_mem.some_number, g_mem.player_pos), 5, 5, 8, rl.WHITE)
-	rl.EndMode2D()
+	rl.DrawRectangle(0, 0, WIDTH, 40, rl.BLACK)
+	rl.DrawFPS(10, 10)
 
 	rl.EndDrawing()
 }
@@ -88,9 +106,9 @@ game_update :: proc() -> bool {
 @(export)
 game_init_window :: proc() {
 	rl.SetConfigFlags({.WINDOW_RESIZABLE})
-	rl.InitWindow(1280, 720, "Odin + Raylib + Hot Reload template!")
+	rl.InitWindow(WIDTH, HEIGHT, "Odin + Raylib + Hot Reload template!")
 	rl.SetWindowPosition(200, 200)
-	rl.SetTargetFPS(500)
+	rl.SetTargetFPS(FPS)
 }
 
 @(export)
@@ -98,14 +116,16 @@ game_init :: proc() {
 	g_mem = new(GameMemory)
 
 	g_mem^ = GameMemory {
-		some_number = 100,
+		bunnies_count = 0,
 	}
+
+	g_mem.tex_bunny = rl.LoadTexture("res/wabbit_alpha.png")
 
 	game_hot_reloaded(g_mem)
 }
 
 @(export)
-game_shutdown :: proc() { 
+game_shutdown :: proc() {
 	free(g_mem)
 }
 
