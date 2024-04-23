@@ -35,7 +35,7 @@
             "label": "Build Hot Reload",
             "type": "shell",
             "windows": {
-                "command": "${workspaceFolder}/build_hot_reload.bat; start build/dev/game_hot_reload.exe",
+                "command": "${workspaceFolder}/build_hot_reload.bat",
             },
             "linux": {
                 "command": "${workspaceFolder}/build_hot_reload.sh",
@@ -55,6 +55,19 @@
                 "kind": "build",
                 "isDefault": true
             },
-        }
+        },
+        {
+            "label": "Start Hot Reload Instance",
+            "type": "shell",
+            "windows": {
+                "command": "${workspaceFolder}/build/dev/game_hot_reload.exe",
+            },
+            "linux": {
+                "command": "${workspaceFolder}/build/dev/game_hot_reload.bin",
+            },
+            "osx": {
+                "command": "${workspaceFolder}/build/dev/game_hot_reload.bin",
+            }
+        },
     ]
 }
