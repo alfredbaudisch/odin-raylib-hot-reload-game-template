@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "C:/Dev/Odin/core"
+		},
+		{
+			"path": "C:/Dev/Odin/examples"
+		},
+		{
+			"path": "C:/Dev/Odin/vendor/raylib"
+		}
+	],
+	"settings": {}
+}
