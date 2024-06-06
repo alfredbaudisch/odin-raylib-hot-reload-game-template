@@ -22,15 +22,15 @@ SPEED_MULT :: FPS * FPS_TO_SPEED
 WIDTH : i32 : 800
 HEIGHT : i32 : 450
 
-Bunny :: struct {
-	pos: rl.Vector2,
-	speed: rl.Vector2,
-	color: rl.Color,
+Bunnies :: struct {
+	pos: [MAX]rl.Vector2,
+	speed: [MAX]rl.Vector2,
+	color: [MAX]rl.Color,
 }
 
 GameMemory :: struct {
 	bunnies_count: int,
-	bunnies: [MAX]Bunny,
+	bunnies: Bunnies,
 	tex_bunny: rl.Texture2D,
 }
 
@@ -44,17 +44,18 @@ ui_camera :: proc() -> rl.Camera2D {
 
 update :: proc() {
 	if rl.IsMouseButtonDown(rl.MouseButton.LEFT) {
+		idx : int = 0
 		fmt.printfln("ADD BUNNIES. Total: {0}", g_mem.bunnies_count)
 
 		for _ in 0..<200 {
 			if g_mem.bunnies_count < MAX {
-				new_bunny := &g_mem.bunnies[g_mem.bunnies_count]
+				idx = g_mem.bunnies_count
 				g_mem.bunnies_count += 1
 
-				new_bunny.pos = rl.GetMousePosition()
-				new_bunny.speed.x = f32(rl.GetRandomValue(-250, 250)) / SPEED_MULT
-				new_bunny.speed.y = f32(rl.GetRandomValue(-250, 250)) / SPEED_MULT
-				new_bunny.color = Color{
+				g_mem.bunnies.pos[idx] = rl.GetMousePosition()
+				g_mem.bunnies.speed[idx].x = f32(rl.GetRandomValue(-250, 250)) / SPEED_MULT
+				g_mem.bunnies.speed[idx].y = f32(rl.GetRandomValue(-250, 250)) / SPEED_MULT
+				g_mem.bunnies.color[idx] = Color{
 					cast(u8)rl.GetRandomValue(50, 240), 
 					cast(u8)rl.GetRandomValue(80, 240), 
 					cast(u8)rl.GetRandomValue(100, 240),
@@ -65,19 +66,17 @@ update :: proc() {
 	}
 
 	for i in 0..<g_mem.bunnies_count {
-		bunny := &g_mem.bunnies[i]
+		g_mem.bunnies.pos[i].x += g_mem.bunnies.speed[i].x
+		g_mem.bunnies.pos[i].y += g_mem.bunnies.speed[i].y
 
-		bunny.pos.x += bunny.speed.x
-		bunny.pos.y += bunny.speed.y
-
-		if (((bunny.pos.x + f32(g_mem.tex_bunny.width/2)) > f32(rl.GetScreenWidth())) ||
-			((bunny.pos.x + f32(g_mem.tex_bunny.width/2)) < 0)) {
-			bunny.speed.x *= -1
+		if (((g_mem.bunnies.pos[i].x + f32(g_mem.tex_bunny.width/2)) > f32(rl.GetScreenWidth())) ||
+			((g_mem.bunnies.pos[i].x + f32(g_mem.tex_bunny.width/2)) < 0)) {
+			g_mem.bunnies.speed[i].x *= -1
 		}
 
-		if (((bunny.pos.y + f32(g_mem.tex_bunny.height/2)) > f32(rl.GetScreenHeight())) ||
-			((bunny.pos.y + f32(g_mem.tex_bunny.height/2)) < 0)) {
-			bunny.speed.y *= -1
+		if (((g_mem.bunnies.pos[i].y + f32(g_mem.tex_bunny.height/2)) > f32(rl.GetScreenHeight())) ||
+			((g_mem.bunnies.pos[i].y + f32(g_mem.tex_bunny.height/2)) < 0)) {
+			g_mem.bunnies.speed[i].y *= -1
 		}
 	}
 }
@@ -87,7 +86,7 @@ draw :: proc() {
 	rl.ClearBackground(rl.BLACK)
 	
 	for i in 0..<g_mem.bunnies_count {
-		rl.DrawTexture(g_mem.tex_bunny, (i32)(g_mem.bunnies[i].pos.x), cast(i32)g_mem.bunnies[i].pos.y, g_mem.bunnies[i].color)
+		rl.DrawTexture(g_mem.tex_bunny, (i32)(g_mem.bunnies.pos[i].x), cast(i32)g_mem.bunnies.pos[i].y, g_mem.bunnies.color[i])
 	}
 
 	rl.DrawRectangle(0, 0, WIDTH, 40, rl.BLACK)
