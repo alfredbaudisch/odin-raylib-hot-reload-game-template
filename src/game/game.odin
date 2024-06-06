@@ -23,14 +23,14 @@ WIDTH : i32 : 800
 HEIGHT : i32 : 450
 
 Bunnies :: struct {
-	pos: [MAX]rl.Vector2,
-	speed: [MAX]rl.Vector2,
-	color: [MAX]rl.Color,
+	pos: rl.Vector2,
+	speed: rl.Vector2,
+	color: rl.Color,
 }
 
 GameMemory :: struct {
 	bunnies_count: int,
-	bunnies: Bunnies,
+	bunnies: #soa[MAX]Bunnies,
 	tex_bunny: rl.Texture2D,
 }
 
